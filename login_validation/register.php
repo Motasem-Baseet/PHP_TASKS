@@ -1,6 +1,6 @@
 <?php
-include('db.php');
 session_start(); // Start session
+include('db.php');
 
 function test_input($data) {
     $data = trim($data);            
@@ -71,7 +71,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $password = $_POST['password'];
     
         if(!empty($fullname) && !empty($email) && !empty($password)) {
-            $sql = 'INSERT INTO users (user_id ,user_name, user_email, password) VALUES (?, ?, ?, ?)';
+            $sql = 'INSERT INTO users (user_id ,user_name, user_email, password) VALUES (:user_id, :user_name, :user_email, :password)';
     
             $stmt = $dbConnection->prepare($sql); // Use PDO prepare
             if ($stmt->execute([$fullname, $email, $password])) {
