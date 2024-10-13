@@ -175,7 +175,7 @@ print_r (array_unique($array3));
 
 
 echo "<p>---------Logical statment-------</p>";
-echo "<p>check two numbers if equal 30</p>";
+echo "<p>---check two numbers if equal 30---</p>";
 
 
 function checksum1($num1 , $num2) {
@@ -192,7 +192,7 @@ $num1 = 10;
 $num2 = 10;
 echo checksum1($num1, $num2);
 
-echo "<p>check two numbers if equal 30</p>";
+echo "<p>----div == 0--</p>";
 
 function oneNumber($num4){
     if ($num4 > 0 && $num4 % 3 == 0){
@@ -205,7 +205,7 @@ $num4 = 20;
 echo oneNumber($num4);
 
 
-echo "<p>check if range between 20-50</p>";
+echo "<p>---range between 20-50---</p>";
 
 function range1($num5){
     if ($num5 >= 20 && $num5 <=50){
@@ -217,7 +217,7 @@ function range1($num5){
 $num5 = 30;
 echo range1($num5);
 
-echo "<p>check the larges number</p>";
+echo "<p>---larges number---</p>";
 function largest($num6 , $num7 , $num8){
     $largeNum = $num6;
     
@@ -234,7 +234,7 @@ $num7 = 5;
 $num8 = 9;
 echo "The largest number is :" . largest($num6 , $num7 , $num8);
 
-echo "<p>check the larges number</p>";
+echo "<p>---unit price---</p>";
 function eBill($unit){
     if ($unit > 0 && $unit <=50 ){
         return "2.50 JD/Unit";
@@ -252,7 +252,7 @@ $unit = 600;
 echo eBill($unit);
 
 
-echo "<p>calculator</p>";
+echo "<p>-----calculator-----</p>";
 function Calculator($fNum , $sNum , $operation){
     switch ($operation){
         case 'add':
@@ -284,7 +284,7 @@ function Calculator($fNum , $sNum , $operation){
     echo "the result is $result";
     
     
-    echo "<p>elogoble to vote </p>";
+    echo "<p>----elogoble to vote--- </p>";
     
     function age($ages){
         if ($ages <18){
@@ -297,7 +297,7 @@ function Calculator($fNum , $sNum , $operation){
     echo age($ages);
     
     
-    echo "<p>elogoble to vote </p>";
+    echo "<p>-----check positive----- </p>";
     function checkNumber($num9) {
         if ($num9 > 0) {
             return "Positive";
@@ -313,7 +313,7 @@ function Calculator($fNum , $sNum , $operation){
     echo checkNumber($num9);
     
     
-    echo "<p>elogoble to vote </p>";
+    echo "<p>-----grades---- </p>";
     function findGrade($scores) {
         $average = array_sum($scores) / count($scores);
         

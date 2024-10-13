@@ -100,88 +100,30 @@ body{
 <body>
     
     <?php
-session_start();
-unset($_SESSION["users"]);
-if ($_SERVER["REQUEST_METHOD"]== "POST"){
-    if (!isset($_SESSION["users"])){
-        $_SESSION["users"]=[];
-}
-    $email=$_POST['email'];
-    $mobile=$_POST['mobile'];
-    $fullname=$_POST['fullname'];
-    $password=$_POST['password'];
+    session_start();
+    include('db.php');
 
 
-    $newUser =[
-        "fullname" =>$fullname,
-        "email"=> $email,
-        "mobile"=> $mobile,
-        "password"=> $password,
-    ];
-    $_SESSION["users"][]=$newUser;
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        $loginEmail = $_POST['email'];
+        $loginPassword = $_POST['password'];
+        $isAuthenticated = false;
 
-}
-
-function test_input($data) {
-    $data = trim($data);            
-    $data = stripslashes($data);     
-    $data = htmlspecialchars($data); 
-    return $data;
-}
-    $email = $emailErr = "";
-   
-    if ($_SERVER["REQUEST_METHOD"] === "POST") {
-        if (empty($_POST["email"])) {
-            $emailErr = "Email is required"; 
-        } else {
-            $email = test_input($_POST["email"]); 
-            if (!preg_match("/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/", $email)) {
-                $emailErr = "Invalid email format"; 
+        if(!isset($_SESSION["users"])){
+            foreach($_SESSION["users"] as $user){
+                if($user["email"] === $loginEmail && $user["password"] === $loginPassword){
+                    $isAuthenticated = true ;
+                    break;
+                }
             }
         }
-    }
-
-    $mobile = $mobileErr = " ";
-    if($_SERVER["REQUEST_METHOD"] === "POST"){
-        if (empty($_POST["mobile"])){
-            $mobileErr = "movile number is required";
-        }else{
-            $mobile = test_input($_POST["mobile"]);
-
-            if(!preg_match("/^[0-9]{14}$/", $mobile)){
-                $mobileErr = "mobile nuber must be exactly";
-            }
+        if ($isAuthenticated){
+            echo "login successful";
+            exit();
+        }else {
+            echo "invalid email ro passeord";
         }
     }
-
-    $fullname = "";
-    $fullnameErr = "";
-
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // Validate full name
-    if (empty($_POST["fullname"])) {
-        $fullnameErr = "Full name is required";
-    } else {
-        $fullname = test_input($_POST["fullname"]);
-        if (!preg_match("/^([a-zA-Z]+ )([a-zA-Z]+ )([a-zA-Z]+ )([a-zA-Z]+)$/", $fullname)) {
-            $fullnameErr = "Full name must contain exactly 4 words with only letters";
-        }
-    }
-}
-
-$password = "";
-$passwordErr = "";
-
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    if (empty($_POST["password"])) {
-        $passwordErr = "Password is required";
-    } else {
-        $password = test_input($_POST["password"]);
-        if (!preg_match("/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_])(?!.*\s).{8,}$/", $password)) {
-            $passwordErr = "Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, a number, a special character, and have no spaces.";
-        }
-    }
-}
 
         ?>
 
@@ -191,34 +133,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <input type="checkbox" id="check">
     <div class="login form">
     <header>Login</header>
-    <form method="POST" >
-    <span class="error"><?php echo $emailErr; ?></span>
+    <form action = "./welcome.php" method="POST" >
         <input type="email" name="email"  placeholder="Enter your email" required>
-        <input type="password" placeholder="Enter your password" required>
+        <input type="password" name ="password" placeholder="Enter your password" required>
         <a href="#">Forgot password?</a>
         <input type="submit" class="button" value="Login">
     </form>
     <div class="signup">
         <span class="signup">Don't have an account?
-        <label for="check">Signup</label>
-        </span>
-    </div>
-    </div>
-    <div class="registration form">
-    <header>Signup</header>
-    <form method = "POST">
-    <input type="email" placeholder="Enter your email" required>
-        <input type="text" name="mobile" placeholder="Enter your mobile" required>
-        <span><?php echo $fullnameErr; ?></span>
-        <input type="name" name="fullname" placeholder="Enter your full name" value="<?php echo $fullname; ?>" required>
-        <input type="password" placeholder="Create a password">
-        <input type="password" placeholder="Confirm your password">
-        <input type="date" name="date" required>
-        <input type="submit" class="button" value="">
-    </form>
-    <div class="signup">
-        <span class="signup">Already have an account?
-        <label for="check">Login</label>
+        <a href="./register.php">Sign up</a>
         </span>
     </div>
     </div>
