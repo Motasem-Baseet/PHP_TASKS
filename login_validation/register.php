@@ -1,138 +1,199 @@
 <?php
-session_start(); // Start session
-include('db.php');
+session_start();
 
-function test_input($data) {
-    $data = trim($data);            
-    $data = stripslashes($data);     
-    $data = htmlspecialchars($data); 
-    return $data;
+// Initialize an empty array to hold errors
+$errors = [];
+
+// Check if the form has been submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Get form inputs and sanitize them
+    $email = filter_var(trim($_POST['email']), FILTER_SANITIZE_EMAIL);
+    $mobile = filter_var(trim($_POST['mobile']), FILTER_SANITIZE_STRING);
+    $fullName = explode(' ', trim($_POST['fullName']));
+    $password = trim($_POST['password']);
+    $confirmPassword = trim($_POST['confirmPassword']);
+    $day = intval($_POST['day']);
+    $month = intval($_POST['month']);
+    $year = intval($_POST['year']);
+    
+    // Validate email
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Invalid email format.";
+    }
+
+    // Validate mobile number
+    if (!preg_match('/^\d{10}$/', $mobile)) {
+        $errors[] = "Mobile number must be 10 digits.";
+    }
+
+    // Validate full name
+    if (count($fullName) < 4 || array_filter($fullName, function($name) {
+        return !preg_match('/^[a-zA-Z]+$/', $name);
+    })) {
+        $errors[] = "Please enter a valid full name (4 sections).";
+    }
+
+    // Validate password strength
+    if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/', $password)) {
+        $errors[] = "Password must be at least 8 characters long and include uppercase, lowercase, numbers, special characters, and no spaces.";
+    }
+
+    // Check if passwords match
+    if ($password !== $confirmPassword) {
+        $errors[] = "Passwords do not match.";
+    }
+
+    // Check date of birth
+    $dob = new DateTime("$year-$month-$day");
+    $age = $dob->diff(new DateTime())->y;
+
+    if ($age < 16) {
+        $errors[] = "You must be at least 16 years old to register.";
+    }
+
+    // If no errors, save user info
+    if (empty($errors)) {
+        // Hash the password for security
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+        // Simulate storing the user data (normally, you'd store this in a database)
+        $_SESSION['registered_user'] = [
+            'email' => $email,
+            'password' => $hashedPassword, // Store the hashed password
+        ];
+
+        // Redirect to login page
+        header('Location: login.php');
+        exit();
+    }
 }
-
-$email = $emailErr = $mobile = $mobileErr = $fullname = $fullnameErr = $password = $passwordErr = $passConf = $passConfErr = "";
-
-// Check if form is submitted
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    
-    // Email validation
-    if (empty($_POST["email"])) {
-        $emailErr = "Email is required"; 
-    } else {
-        $email = test_input($_POST["email"]); 
-        if (!preg_match("/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/", $email)) {
-            $emailErr = "Invalid email format"; 
-        }
-    }
-
-    // Mobile validation
-    if (empty($_POST["mobile"])) {
-        $mobileErr = "Mobile number is required";
-    } else {
-        $mobile = test_input($_POST["mobile"]);
-        if (!preg_match("/^[0-9]{14}$/", $mobile)) {
-            $mobileErr = "Mobile number must be exactly 14 digits";
-        }
-    }
-
-    // Full name validation
-    if (empty($_POST["fullname"])) {
-        $fullnameErr = "Full name is required";
-    } else {
-        $fullname = test_input($_POST["fullname"]);
-        if (!preg_match("/^([a-zA-Z]+ )([a-zA-Z]+ )([a-zA-Z]+ )([a-zA-Z]+)$/", $fullname)) {
-            $fullnameErr = "Full name must contain exactly 4 words with only letters";
-        }
-    }
-
-    // Password validation
-    if (empty($_POST["password"])) {
-        $passwordErr = "Password is required";
-    } else {
-        $password = test_input($_POST["password"]);
-        if (!preg_match("/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_])(?!.*\s).{8,}$/", $password)) {
-            $passwordErr = "Password must be at least 8 characters, include uppercase, lowercase, number, special character, and no spaces.";
-        }
-    }
-
-    // Confirm Password validation
-    if (empty($_POST["passConf"])) {
-        $passConfErr = "Password confirmation is required";
-    } else {
-        $passConf = test_input($_POST["passConf"]);
-        if ($passConf !== $password) {
-            $passConfErr = "Passwords do not match";
-        }
-    }
-    
-    // Store in session if all fields are valid
-    if(isset($_POST['submit'])) {
-        $fullname = $_POST['fullname'];
-        $email = $_POST['email'];
-        $password = $_POST['password'];
-    
-        if(!empty($fullname) && !empty($email) && !empty($password)) {
-            $sql = 'INSERT INTO user (user_id ,user_name, user_email, password) VALUES (:user_id, :user_name, :user_email, :password)';
-    
-            $stmt = $dbConnection->prepare($sql); // Use PDO prepare
-            if ($stmt->execute([$fullname, $email, $password])) {
-                echo "Data inserted successfully!";
-            } else {
-                echo "Failed to insert data.";
-            }
-        } else {
-            echo "Please fill in all fields.";
-        }
-    }
-    
-
-
-
-
-    }
-
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signup Form</title>
+    <title>Sign-Up</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <style>
-        /* Styles */
-        body { min-height: 100vh; background: #009579; display: flex; justify-content: center; align-items: center; }
-        .container { width: 400px; background: #fff; border-radius: 7px; padding: 20px; box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3); }
-        .container h2 { text-align: center; margin-bottom: 20px; }
-        .container input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ddd; }
-        .container input[type="submit"] { background-color: #009579; color: white; border: none; cursor: pointer; }
-        .container input[type="submit"]:hover { background-color: #006653; }
-        .error { color: red; margin-bottom: 15px; }
+        body, html {
+            height: 100%;
+            background-color: #f0f2f5;
+            background: linear-gradient(90deg, rgba(0, 123, 255, 1) 0%, rgba(0, 255, 234, 1) 100%);
+            
+        }
+        .gradient-custom {
+        }
+        .card {
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 1rem;
+        }
+        h2 {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        .form-control {
+            background-color: #333;
+            color: white;
+            border: none;
+        }
+        .form-control:focus {
+            box-shadow: none;
+            border-color: #0dcaf0;
+        }
+        .btn-outline-light {
+            background-color: #0dcaf0;
+            border-color: transparent;
+        }
+        .btn-outline-light:hover {
+            background-color: #0bb5e0;
+        }
+        .alert-danger {
+            background-color: rgba(255, 0, 0, 0.2);
+            border-color: #ff0000;
+        }
+        .text-white-50 {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+        .dob-container {
+            display: flex;
+            justify-content: space-between;
+        }
+        .dob-container input {
+            width: 30%;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Signup</h2>
-        <form action="./welcome.php" method="POST">
-            <div class="error"><?php echo $emailErr; ?></div>
-            <input type="email" name="email" placeholder="Enter your email" value="<?php echo $email; ?>" required>
-            
-            <div class="error"><?php echo $mobileErr; ?></div>
-            <input type="text" name="mobile" placeholder="Enter your mobile" value="<?php echo $mobile; ?>" required>
-            
-            <div class="error"><?php echo $fullnameErr; ?></div>
-            <input type="text" name="fullname" placeholder="Enter your full name" value="<?php echo $fullname; ?>" required>
-            
-            <div class="error"><?php echo $passwordErr; ?></div>
-            <input type="password" name="password" placeholder="Create a password" required>
-            
-            <div class="error"><?php echo $passConfErr; ?></div>
-            <input type="password" name="passConf" placeholder="Confirm the password" required>
-            
-            <input type="submit" value="Sign Up">
-        </form>
+<section class="vh-100 gradient-custom">
+  <div class="container py-5 h-100">
+    <div class="row d-flex justify-content-center align-items-center h-100">
+      <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+        <div class="card text-white">
+          <div class="card-body p-5 text-center">
 
-        <div class="signup">
-            <a href="login.php">Already have an account? Login</a>
+            <div class="mb-md-5 mt-md-4 pb-5">
+              <h2 class="fw-bold mb-2 text-uppercase">Sign-Up</h2>
+              <p class="text-white-50 mb-5">Please fill in your details!</p>
+
+              <?php if (!empty($errors)): ?>
+                  <div class="alert alert-danger">
+                      <?php foreach ($errors as $error): ?>
+                          <p><?php echo htmlspecialchars($error); ?></p>
+                      <?php endforeach; ?>
+                  </div>
+              <?php endif; ?>
+
+              <form method="POST" action="">
+                <div class="form-outline form-white mb-4">
+                  <input type="text" id="typeNameX" name="fullName" class="form-control form-control-lg" required />
+                  <label class="form-label" for="typeNameX">Full Name (fname, middle, last, family)</label>
+                </div>
+
+                <div class="form-outline form-white mb-4">
+                  <input type="email" id="typeEmailX" name="email" class="form-control form-control-lg" required />
+                  <label class="form-label" for="typeEmailX">Email</label>
+                </div>
+
+                <div class="form-outline form-white mb-4">
+                  <input type="tel" id="typeMobileX" name="mobile" class="form-control form-control-lg" required />
+                  <label class="form-label" for="typeMobileX">Mobile (10 digits)</label>
+                </div>
+
+                <div class="form-outline form-white mb-4">
+                  <input type="password" id="typePasswordX" name="password" class="form-control form-control-lg" required />
+                  <label class="form-label" for="typePasswordX">Password</label>
+                </div>
+
+                <div class="form-outline form-white mb-4">
+                  <input type="password" id="typeConfirmPasswordX" name="confirmPassword" class="form-control form-control-lg" required />
+                  <label class="form-label" for="typeConfirmPasswordX">Confirm Password</label>
+                </div>
+
+                <div class="form-group mb-4">
+                  <label for="dob" class="form-label">Date of Birth</label>
+                  <div class="dob-container">
+                    <input type="number" id="day" name="day" class="form-control" placeholder="DD" min="1" max="31" required />
+                    <input type="number" id="month" name="month" class="form-control" placeholder="MM" min="1" max="12" required />
+                    <input type="number" id="year" name="year" class="form-control" placeholder="YYYY" required />
+                  </div>
+                </div>
+
+                <button class="btn btn-outline-light btn-lg px-5" type="submit">Sign Up</button>
+              </form>
+
+              <div class="d-flex justify-content-center text-center mt-4 pt-1">
+                <p class="mb-0">Already have an account? <a href="./login.php" class="text-white-50 fw-bold">Log In</a></p>
+              </div>
+
+            </div>
+
+          </div>
         </div>
+      </div>
     </div>
+  </div>
+</section>
 </body>
 </html>
