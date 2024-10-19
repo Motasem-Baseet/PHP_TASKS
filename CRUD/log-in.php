@@ -1,31 +1,47 @@
 <?php
 session_start();
-require 'config.php';
+require 'config.php';  // Ensure this is the correct file to establish DB connection
 
 $errors = [];
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+    // Sanitize and validate input
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
 
-    $sql = "SELECT * FROM user WHERE user_name = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-
-    if ($user && password_verify($password, $user['user_password'])) {
-        $_SESSION['username'] = $user['username'];
-        $_SESSION['role'] = $user['role'];
-
-        if ($user['role'] == 'admin') {
-            header("Location: dashboard.php");
-        } else {
-            header("Location: welcome.php");
-        }
-        exit();
+    // Check if username or password is empty
+    if (empty($username) || empty($password)) {
+        $errors[] = "Please enter both username and password.";
     } else {
-        $errors[] = "Invalid username or password!";
+        // Prepare SQL to check if the user exists
+        $sql = "SELECT * FROM users WHERE username = ?";
+        if ($stmt = $conn->prepare($sql)) {
+            // Bind parameters
+            $stmt->bind_param("s", $username);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $user = $result->fetch_assoc();
+
+            // Verify password
+            if ($user && password_verify($password, $user['password'])) {
+                // Set session variables
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['role'] = $user['role'];
+
+                // Redirect based on role
+                if ($user['role'] == 'admin') {
+                    header("Location: dashboard.php");
+                } else {
+                    header("Location: welcome.php");
+                }
+                exit();
+            } else {
+                $errors[] = "Invalid username or password!";
+            }
+        } else {
+            // SQL execution error
+            $errors[] = "Error in preparing statement: " . $conn->error;
+        }
     }
 }
 ?>
@@ -38,34 +54,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <title>Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            background-color: #f8f9fa;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            max-width: 400px;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            background-color: white;
-        }
-        h2 {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .btn-primary {
-            width: 100%;
-        }
-        .alert {
-            margin-bottom: 15px;
-        }
+        body { background-color: #f8f9fa; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { max-width: 400px; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); background-color: white; }
+        h2 { margin-bottom: 20px; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        .btn-primary { width: 100%; }
+        .alert { margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -77,7 +71,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="alert alert-success">
             <?php echo $_SESSION['success_message']; ?>
         </div>
-        <?php unset($_SESSION['success_message']); // Clear the message after displaying ?>
+        <?php unset($_SESSION['success_message']); // Clear message after displaying ?>
     <?php endif; ?>
 
     <!-- Display errors if any -->
@@ -92,7 +86,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <?php endif; ?>
 
     <!-- Login form -->
-    <form method="POST" action="log-in.php">
+    <form method="POST" action="">
         <div class="form-group">
             <label for="username">Username</label>
             <input type="text" id="username" name="username" class="form-control" required>

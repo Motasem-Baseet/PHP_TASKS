@@ -6,6 +6,9 @@
     <title>Document</title>
 </head>
 <body>
-    
+    <?php
+    echo "hello class B OCA"
+    ?>
+
 </body>
 </html>
